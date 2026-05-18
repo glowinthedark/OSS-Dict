@@ -7,10 +7,10 @@ env:
   APK_PATH_DEBUG: build/outputs/apk/debug/OSS-Dict-debug.apk
 
 on:
-  push:
-    branches: [ "master42" ]
-  pull_request:
-    branches: [ "master42" ]
+  # push:
+  #   branches: [ "master42" ]
+  # pull_request:
+  #   branches: [ "master42" ]
   workflow_dispatch: 
 
 jobs:
@@ -22,23 +22,22 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        filter: tree:0
         submodules: recursive
         fetch-tags: true
         ref: apk-build
 
-    - name: Update git submodules
-      run: |
-        git submodule update --init --recursive --remote
+    # - name: Update git submodules
+    #   run: |
+    #     git submodule update --init --recursive --remote
 
     - name: set up JDK ${{ env.JAVA_VERSION }}
       uses: actions/setup-java@v4
       with:
         java-version: ${{ env.JAVA_VERSION }}
-        distribution: 'zulu'
+        distribution: 'temurin'
         cache: gradle
 
-    - name: Set env vars
+    - name: Set TAG env var
       run: |
         echo "TAG=$(git describe --tags --abbrev=1 || echo ${{ github.event.repository.name }})" >> $GITHUB_ENV        
 
@@ -46,11 +45,11 @@ jobs:
       run: chmod +x gradlew
       
     - name: Build apk debug
-      if: true
+      if: false
       run: ./gradlew assembleDebug
 
-    - name: Upload APK Debug - ${{ env.repository_name }}
-      if: true
+    - name: Upload APK Debug - ${{ github.event.repository.name }}
+      if: false
       uses: actions/upload-artifact@v4
       with:
         name: ${{ github.event.repository.name }}-debug.apk
@@ -61,28 +60,23 @@ jobs:
         GITHUB_CONTEXT: ${{ toJson(github) }}
       run: echo "$GITHUB_CONTEXT"
       
-    - name: Get JKS Keystore
-      id: decode_keystore
-      uses: timheuer/base64-to-file@v1.2
-      with:
-        fileName: 'keystore.jks'
-        encodedString: ${{ secrets.KEYSTORE_BASE64 }}
-        
-    - name: print JKS keystore path
-      run: echo "KEYSTORE PATH=${{ steps.decode_keystore.outputs.filePath}}"
+    - name: Decode keystore
+      run: |
+        echo "${{ secrets.KEYSTORE }}" \
+          | base64 --decode > $RUNNER_TEMP/release.keystore
       
     - name: Build Release APK
       env:
-        KEYSTORE: ${{ steps.decode_keystore.outputs.filePath}}
+        KEYSTORE: ${{ runner.temp }}/release.keystore
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-      run: ./gradlew --no-daemon assembleRelease
+      run: ./gradlew assembleRelease
       
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.event.repository.name }}-release.apk
+        name: ${{ github.event.repository.name }}-release.apk
         path: ${{ env.APK_PATH_RELEASE }}
 
     # - name: Upload Release AAB
