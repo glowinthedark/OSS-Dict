@@ -39,7 +39,7 @@ jobs:
 
     - name: Set TAG env var
       run: |
-        echo "TAG=$(git describe --tags --abbrev=1 || echo ${{ github.event.repository.name }})" >> $GITHUB_ENV        
+        echo "TAG=$(git describe --tags || echo ${{ github.event.repository.name }})" >> $GITHUB_ENV        
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
