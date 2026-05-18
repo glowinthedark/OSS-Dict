@@ -1,4 +1,4 @@
-name: Android CI
+name: build and release APK
 
 
 env:
@@ -14,7 +14,9 @@ on:
   workflow_dispatch: 
 
 jobs:
-  build:
+  build-and-release:
+    permissions:
+      contents: write
 
     runs-on: ubuntu-latest
 
@@ -93,9 +95,10 @@ jobs:
       uses: softprops/action-gh-release@v2
 #        if: startsWith(github.ref, 'refs/heads/android/')
       with:
-        tag_name: "v2.0.2/75" 
+        tag_name: ${{env.TAG}} 
         files: ${{ env.APK_PATH_RELEASE }}
         # files: ${{ env.APK_PATH_RELEASE }}, ${{ env.AAB_PATH_RELEASE }}
         generate_release_notes: false
         make_latest: true
+        
 
