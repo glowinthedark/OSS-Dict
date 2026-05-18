@@ -25,6 +25,7 @@ jobs:
         filter: tree:0
         submodules: recursive
         fetch-tags: true
+        ref: apk-build
 
     - name: Update git submodules
       run: |
