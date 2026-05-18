@@ -93,7 +93,7 @@ jobs:
       uses: softprops/action-gh-release@v2
 #        if: startsWith(github.ref, 'refs/heads/android/')
       with:
-        tag_name: ${{ env.TAG }}
+        tag_name: "v2.0.2/75" 
         files: ${{ env.APK_PATH_RELEASE }}
         # files: ${{ env.APK_PATH_RELEASE }}, ${{ env.AAB_PATH_RELEASE }}
         generate_release_notes: false
