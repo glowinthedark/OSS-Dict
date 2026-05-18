@@ -1,5 +1,11 @@
 name: Android CI
 
+
+env:
+  JAVA_VERSION: 21
+  APK_PATH_RELEASE: build/outputs/apk/release/OSS-Dict-release.apk
+  APK_PATH_DEBUG: build/outputs/apk/debug/OSS-Dict-debug.apk
+
 on:
   push:
     branches: [ "master42" ]
@@ -18,15 +24,79 @@ jobs:
         fetch-depth: 0
         filter: tree:0
         submodules: recursive
-    
-    - name: set up JDK 21
+        fetch-tags: true
+
+    - name: Update git submodules
+      run: |
+        git submodule update --init --recursive --remote
+
+    - name: set up JDK ${{ env.JAVA_VERSION }}
       uses: actions/setup-java@v4
       with:
-        java-version: '21'
+        java-version: ${{ env.JAVA_VERSION }}
         distribution: 'zulu'
         cache: gradle
 
+    - name: Set env vars
+      run: |
+        echo "TAG=$(git describe --tags --abbrev=1 || echo ${{ github.event.repository.name }})" >> $GITHUB_ENV        
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew --no-daemon assembleDebug
+      
+    - name: Build apk debug
+      if: true
+      run: ./gradlew assembleDebug
+
+    - name: Upload APK Debug - ${{ env.repository_name }}
+      if: true
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.event.repository.name }}-debug.apk
+        path: ${{ env.APK_PATH_DEBUG }}
+        
+    - name: DEBUG PRINT GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+      
+    - name: Get JKS Keystore
+      id: decode_keystore
+      uses: timheuer/base64-to-file@v1.2
+      with:
+        fileName: 'keystore.jks'
+        encodedString: ${{ secrets.KEYSTORE_BASE64 }}
+        
+    - name: print JKS keystore path
+      run: echo "KEYSTORE PATH=${{ steps.decode_keystore.outputs.filePath}}"
+      
+    - name: Build Release APK
+      env:
+        KEYSTORE: ${{ steps.decode_keystore.outputs.filePath}}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      run: ./gradlew --no-daemon assembleRelease
+      
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.event.repository.name }}-release.apk
+        path: ${{ env.APK_PATH_RELEASE }}
+
+    # - name: Upload Release AAB
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: ${{ github.event.repository.name }}-release.aab
+    #     path: ${{ env.AAB_PATH_RELEASE }}          
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+#        if: startsWith(github.ref, 'refs/heads/android/')
+      with:
+        tag_name: ${{ env.TAG }}
+        files: ${{ env.APK_PATH_RELEASE }}
+        # files: ${{ env.APK_PATH_RELEASE }}, ${{ env.AAB_PATH_RELEASE }}
+        generate_release_notes: false
+        make_latest: true
+
