@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
         submodules: recursive
@@ -33,7 +33,7 @@ jobs:
     #     git submodule update --init --recursive --remote
 
     - name: set up JDK ${{ env.JAVA_VERSION }}
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: ${{ env.JAVA_VERSION }}
         distribution: 'temurin'
@@ -56,7 +56,7 @@ jobs:
 
     - name: Upload APK Debug - ${{ github.event.repository.name }}
       if: false
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ github.event.repository.name }}-debug.apk
         path: ${{ env.APK_PATH_DEBUG }}
@@ -80,13 +80,13 @@ jobs:
       run: ./gradlew assembleRelease
       
     - name: Upload Release APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ github.event.repository.name }}-release.apk
         path: ${{ env.APK_PATH_RELEASE }}
 
     # - name: Upload Release AAB
-    #   uses: actions/upload-artifact@v4
+    #   uses: actions/upload-artifact@v6
     #   with:
     #     name: ${{ github.event.repository.name }}-release.aab
     #     path: ${{ env.AAB_PATH_RELEASE }}          
