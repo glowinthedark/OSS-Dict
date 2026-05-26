@@ -41,8 +41,8 @@ jobs:
 
     - name: Set TAG env var
       run: |
-        RAW=$(git describe --tags --always 2>/dev/null || echo "${{ github.event.repository.name }}")
-        CLEAN=$(echo "$RAW" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+        RAW=$(git describe --tags --abbrev=0 2>/dev/null || echo "${{ github.event.repository.name }}")
+        CLEAN=$(echo "$RAW" | tr '/' '-')
         echo "TAG=$CLEAN" >> $GITHUB_ENV
         echo "raw=$RAW" >> $GITHUB_OUTPUT
         echo "clean=$CLEAN" >> $GITHUB_OUTPUT
@@ -61,10 +61,10 @@ jobs:
         name: ${{ github.event.repository.name }}-debug.apk
         path: ${{ env.APK_PATH_DEBUG }}
         
-    - name: DEBUG PRINT GitHub context
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: echo "$GITHUB_CONTEXT"
+    # - name: DEBUG PRINT GitHub context
+    #   env:
+    #     GITHUB_CONTEXT: ${{ toJson(github) }}
+    #   run: echo "$GITHUB_CONTEXT"
       
     - name: Decode keystore
       run: |
@@ -83,13 +83,7 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: ${{ github.event.repository.name }}-release.apk
-        path: ${{ env.APK_PATH_RELEASE }}
-
-    # - name: Upload Release AAB
-    #   uses: actions/upload-artifact@v6
-    #   with:
-    #     name: ${{ github.event.repository.name }}-release.aab
-    #     path: ${{ env.AAB_PATH_RELEASE }}          
+        path: ${{ env.APK_PATH_RELEASE }}   
         
     - name: Create Release
       uses: softprops/action-gh-release@v2
