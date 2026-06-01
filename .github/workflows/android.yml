@@ -94,6 +94,6 @@ jobs:
         # files: ${{ env.APK_PATH_RELEASE }}, ${{ env.AAB_PATH_RELEASE }}
         generate_release_notes: false
         make_latest: true
-        update_release: true
+        overwrite_files: true
         
 
