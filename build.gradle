@@ -2,14 +2,6 @@ plugins {
     id 'com.android.application' version '8.13.2'
 }
 
-repositories {
-    mavenCentral()
-    google()
-    maven {
-        url "https://jitpack.io"
-    }
-}
-
 def getGitRepoUrl = {
     try {
         def proc = ['git', 'remote', 'get-url', 'origin'].execute()
@@ -51,10 +43,10 @@ android {
     defaultConfig {
         namespace "itkach.aard2"
         applicationId "com.akylas.aard2"
-        minSdk 21
+        minSdk 24
         targetSdk 36
-        versionCode 75
-        versionName "2.0.2"
+        versionCode 79
+        versionName "2.0.6"
         buildConfigField "String", "REPO_URL", "\"${getGitRepoUrl()}\""
         buildConfigField "String", "SPONSORS_URL", "\"${getGitSponsorsUrl()}\""
     }
@@ -109,12 +101,20 @@ android {
     }
 
     buildTypes {
+        // uncommment this if you want to test proguard in debug
+//        debug {
+//            minifyEnabled true
+//            shrinkResources true
+//            proguardFiles("proguard-rules.pro")
+//            zipAlignEnabled true
+//        }
         release {
             minifyEnabled true
             shrinkResources true
             if (System.getenv("KEYSTORE") != null) {
                 signingConfig signingConfigs.release
             }
+            proguardFiles("proguard-rules.pro")
         }
     }
     buildFeatures {
@@ -150,7 +150,11 @@ dependencies {
     }
     implementation "androidx.webkit:webkit:1.15.0"
 
+<<<<<<< HEAD
     implementation 'com.github.glowinthedark:jspeex:speex-decoder-SNAPSHOT'
+=======
+    implementation 'com.github.Akylas:jspeex:1.0.0'
+>>>>>>> upstream/master
 
     api 'com.fasterxml.jackson.core:jackson-databind:2.21.2'
     api 'com.fasterxml.jackson.core:jackson-core:2.21.2'
