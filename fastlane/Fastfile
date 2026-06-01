@@ -12,8 +12,8 @@ def truncate(string, length = 20)
 end
 def writeFileIfNotExist(filePath, string)
   if !File.exist?(filePath) 
-    if (Dir.exist?(File.basename(filePath)) == false)
-      FileUtils.mkdir File.basename(filePath)
+    if (Dir.exist?(File.dirname(filePath)) == false)
+      FileUtils.mkdir File.dirname(filePath)
     end
     File.write(filePath, string)
   end
@@ -137,7 +137,7 @@ lane :build_flavor do |params|
 
   if (options[:publish] != false)
     if (platform == 'android')
-      write_changelog(version:versionCode, changelog: flavor != 'github' ? changelog : get_changelog(platform:platform, flavor:'store'));
+      write_changelog(version:versionCode, changelog: flavor != 'github' ? changelog : get_changelog(platform:platform, flavor:'store', commit_url:commit_url));
     end
     case flavor
     when 'appcenter'
@@ -240,26 +240,29 @@ platform :android do
     version = params[:version]
     changelog = params[:changelog]
 
-    if (changelog && changelog.length > 500) 
-      changelog = changelog[0..499]
-    end
-
-    metadata_dir=File.join(metadata_path_realpath,"android")
-    puts "current dir: #{Dir.getwd}"
-    puts "metadata_dir: #{metadata_dir}"
-    system 'mkdir', '-p', metadata_dir
-    files = []
-    metadata_languages.each { |lang| 
-      changelogFolderPath = File.join(metadata_dir, lang, "changelogs")
-      puts "changelogFolderPath: #{changelogFolderPath}"
-      changelogFilePath = File.join(changelogFolderPath, "#{version}.txt")
-      writeFileIfNotExist(changelogFilePath, changelog)
-      files.push(changelogFilePath)
-    }
-    # Create a new branch and upload a PR for it.
-    if (files.length > 0)
-      git_add(path: files)
-      git_commit(path: files, message: "#{version} release notes", allow_nothing_to_commit: true)
+    if (changelog) 
+      if (changelog.length > 500) 
+        changelog = changelog[0..499]
+      end
+      metadata_dir=File.join(metadata_path_realpath,"android")
+      puts "current dir: #{Dir.getwd}"
+      puts "metadata_dir: #{metadata_dir}"
+      system 'mkdir', '-p', metadata_dir
+      files = []
+      metadata_languages.each { |lang| 
+        if (Dir.exist?( File.join(metadata_dir, lang)))
+          changelogFolderPath = File.join(metadata_dir, lang, "changelogs")
+          puts "changelogFolderPath: #{changelogFolderPath}"
+          changelogFilePath = File.join(changelogFolderPath, "#{version}.txt")
+          writeFileIfNotExist(changelogFilePath, changelog)
+          files.push(changelogFilePath)
+        end
+      }
+      # Create a new branch and upload a PR for it.
+      if (files.length > 0)
+        git_add(path: files)
+        git_commit(path: files, message: "#{version} release notes", allow_nothing_to_commit: true)
+      end
     end
     # sh("git add #{metadata_dir}; git commit -m '#{version} release notes' --allow-empty")
   end
@@ -287,6 +290,7 @@ platform :android do
       metadata_path:File.join(metadata_path_realpath, "android"),
       track_promote_to: track,
       aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
+      skip_upload_apk: true,
       skip_upload_screenshots: !options[:upload_screenshots],
       skip_upload_images: !options[:upload_images],
       skip_upload_metadata: !options[:upload_metadata]
